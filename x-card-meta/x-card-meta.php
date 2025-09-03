@@ -206,38 +206,15 @@ class XCardMeta {
      * Get OG description or fallback to post excerpt
      */
     private function get_og_description($post_id) {
-        $og_description = '';
+        // First try to get from existing OG meta
+        $og_description = get_post_meta($post_id, '_yoast_wpseo_opengraph-description', true);
         
-        // Method 1: Check if we can get it from document head (most reliable)
-        $og_description = $this->get_meta_from_head('og:description', $post_id);
-        
-        // Method 2: Try SEO plugin meta fields
+        // Try other common OG description meta fields
         if (empty($og_description)) {
-            // Yoast SEO
-            $og_description = get_post_meta($post_id, '_yoast_wpseo_opengraph-description', true);
-            
-            // If still empty, try Yoast meta description
-            if (empty($og_description)) {
-                $og_description = get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
-            }
-            
-            // All in One SEO
-            if (empty($og_description)) {
-                $og_description = get_post_meta($post_id, '_aioseop_description', true);
-            }
-            
-            // RankMath
-            if (empty($og_description)) {
-                $og_description = get_post_meta($post_id, 'rank_math_description', true);
-            }
-            
-            // The SEO Framework
-            if (empty($og_description)) {
-                $og_description = get_post_meta($post_id, '_genesis_description', true);
-            }
+            $og_description = get_post_meta($post_id, '_aioseop_description', true);
         }
         
-        // Method 3: Fallback to post excerpt or content
+        // Fallback to post excerpt
         if (empty($og_description)) {
             $post = get_post($post_id);
             if ($post) {
@@ -249,52 +226,25 @@ class XCardMeta {
             }
         }
         
-        return trim($og_description);
+        return $og_description;
     }
     
     /**
      * Get OG image with support for renamed files
      */
     private function get_og_image($post_id) {
-        $og_image = '';
+        // First try to get from existing OG meta
+        $og_image = get_post_meta($post_id, '_yoast_wpseo_opengraph-image', true);
         
-        // Method 1: Check if we can get it from document head (most reliable)
-        $og_image = $this->get_meta_from_head('og:image', $post_id);
-        
-        // Method 2: Try SEO plugin meta fields
+        // Try other common OG image meta fields
         if (empty($og_image)) {
-            // Yoast SEO
-            $og_image = get_post_meta($post_id, '_yoast_wpseo_opengraph-image', true);
-            
-            // Try Yoast image ID
-            if (empty($og_image)) {
-                $image_id = get_post_meta($post_id, '_yoast_wpseo_opengraph-image-id', true);
-                if ($image_id) {
-                    $og_image = wp_get_attachment_image_url($image_id, 'large');
-                }
-            }
-            
-            // All in One SEO
-            if (empty($og_image)) {
-                $aioseop_settings = get_post_meta($post_id, '_aioseop_opengraph_settings', true);
-                if (is_array($aioseop_settings) && isset($aioseop_settings['aioseop_opengraph_settings_image'])) {
-                    $og_image = $aioseop_settings['aioseop_opengraph_settings_image'];
-                }
-            }
-            
-            // RankMath
-            if (empty($og_image)) {
-                $og_image = get_post_meta($post_id, 'rank_math_facebook_image', true);
-                if (empty($og_image)) {
-                    $image_id = get_post_meta($post_id, 'rank_math_facebook_image_id', true);
-                    if ($image_id) {
-                        $og_image = wp_get_attachment_image_url($image_id, 'large');
-                    }
-                }
+            $og_image = get_post_meta($post_id, '_aioseop_opengraph_settings', true);
+            if (is_array($og_image) && isset($og_image['aioseop_opengraph_settings_image'])) {
+                $og_image = $og_image['aioseop_opengraph_settings_image'];
             }
         }
         
-        // Method 3: Try featured image as final fallback
+        // Try featured image
         if (empty($og_image)) {
             $featured_image_id = get_post_thumbnail_id($post_id);
             if ($featured_image_id) {
@@ -308,46 +258,6 @@ class XCardMeta {
         }
         
         return $og_image;
-    }
-    
-    /**
-     * Get meta content from document head by parsing existing output
-     */
-    private function get_meta_from_head($property, $post_id) {
-        // Create a static cache to avoid repeated processing
-        static $head_cache = array();
-        
-        $cache_key = $post_id . '_' . $property;
-        if (isset($head_cache[$cache_key])) {
-            return $head_cache[$cache_key];
-        }
-        
-        $meta_content = '';
-        
-        // Capture what other plugins have already output for OG tags
-        // This is more efficient than re-processing everything
-        if (function_exists('wpseo_get_value')) {
-            // Yoast SEO integration
-            if ($property === 'og:description') {
-                $meta_content = wpseo_get_value('opengraph-description', $post_id);
-            } elseif ($property === 'og:image') {
-                $meta_content = wpseo_get_value('opengraph-image', $post_id);
-            }
-        }
-        
-        // If still empty, try to get from WordPress filters that SEO plugins use
-        if (empty($meta_content)) {
-            if ($property === 'og:description') {
-                $meta_content = apply_filters('wpseo_opengraph_desc', '', $post_id);
-            } elseif ($property === 'og:image') {
-                $meta_content = apply_filters('wpseo_opengraph_image', '', $post_id);
-            }
-        }
-        
-        // Cache the result
-        $head_cache[$cache_key] = $meta_content;
-        
-        return $meta_content;
     }
     
     /**
