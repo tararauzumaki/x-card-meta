@@ -1,10 +1,10 @@
 <?php
 /**
  * Plugin Name: X Card Meta
- * Plugin URI: https://yoursite.com/x-card-meta
+ * Plugin URI: https://github.com/tararauzumaki/x-card-meta
  * Description: Adds X (Twitter) card meta tags with summary large image to your WordPress site. Optimized for performance and compatible with image renaming plugins.
  * Version: 1.0.0
- * Author: Your Name
+ * Author: Tanvir Rana Rabbi
  * License: GPL v2 or later
  * Text Domain: x-card-meta
  * Domain Path: /languages
